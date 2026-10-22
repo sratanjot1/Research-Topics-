@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="BULLET TIME - Safe reinforcement learning for whole-body evasion on a constrained base.">
+<title>BULLET TIME - Safe Reinforcement Learning</title>
+<style>
+:root{
+  --bg:#070b09;--bg2:#0b110e;--panel:#0d1411;--panel2:#111a16;
+  --line:rgba(255,255,255,.11);--text:#f2f5f3;--muted:#96a39d;
+  --soft:#cbd4cf;--green:#9bea4d;--green-soft:rgba(155,234,77,.08);
+  --shadow:0 18px 50px rgba(0,0,0,.20);--max:1120px
+}
+[data-theme="light"]{
+  --bg:#f5f7f5;--bg2:#ffffff;--panel:#ffffff;--panel2:#eef2ee;
+  --line:rgba(11,22,16,.13);--text:#111713;--muted:#5e6a63;
+  --soft:#334039;--green:#4f8f25;--green-soft:rgba(79,143,37,.08);
+  --shadow:0 18px 50px rgba(20,35,25,.08)
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;transition:background .25s ease,color .25s ease}
+a{color:inherit;text-decoration:none}
+.container{width:min(var(--max),calc(100% - 42px));margin:auto}
+nav{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.nav-inner{height:68px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.logo{font-size:16px;font-weight:950;letter-spacing:.08em}.logo span{color:var(--green)}.logo-accent{color:var(--green)}
+.nav-links{display:flex;gap:22px;color:var(--muted);font-size:12px}.nav-links a:hover{color:var(--text)}
+.nav-actions{display:flex;align-items:center;gap:9px}
+.nav-cta,.theme-toggle{font-size:12px;border:1px solid var(--line);padding:9px 13px;border-radius:999px;background:var(--panel);color:var(--text);cursor:pointer}
+.theme-toggle{display:flex;align-items:center;gap:7px}.theme-icon{font-size:13px}
+.hero{padding:86px 0 72px;border-bottom:1px solid var(--line);text-align:center;display:flex;flex-direction:column;align-items:center}
+.kicker{display:inline-flex;gap:9px;align-items:center;color:var(--muted);font-size:11px;letter-spacing:.15em;text-transform:uppercase;border:1px solid var(--line);padding:8px 12px;border-radius:999px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 15px color-mix(in srgb,var(--green) 70%,transparent)}
+h1{font-size:clamp(74px,12vw,150px);color:var(--text);line-height:.82;letter-spacing:-.08em;margin:34px 0 24px;font-weight:950}
+h1 .accent{color:inherit}.title-accent{color:var(--green) !important}
+.paper-title{font-size:clamp(20px,2.5vw,31px);line-height:1.2;letter-spacing:-.035em;max-width:820px;color:var(--soft);margin:0 auto;text-align:center}
+.authors{margin-top:18px;color:var(--muted);font-size:13px;line-height:1.7}
+.hero-description{max-width:760px;margin:20px auto 0;color:var(--muted);font-size:15px;line-height:1.75}
+.hero-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:27px}
+.btn{display:inline-block;padding:12px 17px;border-radius:11px;border:1px solid var(--line);font-size:13px;font-weight:800}
+.btn-primary{background:var(--green);color:#091007;border-color:var(--green)}.btn-secondary{background:var(--panel)}
+section{padding:78px 0;border-bottom:1px solid var(--line)}
+.section-label{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--green);font-weight:900}
+.section-title{font-size:clamp(36px,5vw,61px);line-height:.95;letter-spacing:-.06em;margin:9px 0 18px}
+.section-copy{max-width:720px;color:var(--muted);line-height:1.75;font-size:15px}
+.abstract{display:grid;grid-template-columns:.7fr 1.6fr;gap:70px}
+.abstract-text{font-size:19px;line-height:1.7;color:var(--soft);margin:0}
+.abstract-text strong{color:var(--text)}.paper-note{font-size:11px;line-height:1.6;color:var(--muted);margin-top:20px}
+.rq-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.rq{padding:30px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(145deg,color-mix(in srgb,var(--panel2) 85%,transparent),var(--panel));min-height:240px;position:relative;overflow:hidden;box-shadow:var(--shadow)}
+.rq::after{content:"";position:absolute;width:170px;height:170px;border:1px solid color-mix(in srgb,var(--green) 18%,transparent);border-radius:50%;right:-70px;bottom:-70px}
+.rq-number{font-size:22px;color:var(--green);letter-spacing:.16em;font-weight:950;line-height:1}
+.rq h3{font-size:clamp(31px,3.4vw,46px);letter-spacing:-.045em;line-height:1.08;margin:52px 0 18px;max-width:620px}.rq p{color:var(--muted);line-height:1.7;margin:0;font-size:15px}
+.video-wrap{border:1px solid var(--line);background:#020403;border-radius:22px;overflow:hidden;box-shadow:var(--shadow)}
+video{display:block;width:100%;aspect-ratio:16/9;object-fit:contain;background:#050807}
+.video-caption{padding:13px 17px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:15px;color:var(--muted);font-size:11px}
+.method-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.method-card{border:1px solid var(--line);border-radius:18px;padding:25px;background:var(--panel);box-shadow:var(--shadow)}
+.method-card h3{margin:0 0 9px;font-size:19px}.method-card p{margin:0;color:var(--muted);line-height:1.65}
+.figure{margin-top:28px;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:var(--panel);box-shadow:var(--shadow)}
+.figure img{display:block;width:100%;height:auto}.figure-caption{padding:14px 17px;color:var(--muted);font-size:11px;line-height:1.55;border-top:1px solid var(--line)}
+.curriculum{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
+.level{padding:25px 28px 24px;min-height:0;border:1px solid var(--line);border-radius:19px;background:var(--panel);position:relative;box-shadow:var(--shadow)}
+.level-num{color:var(--green);font-size:12px;letter-spacing:.14em;font-weight:950}
+.level h3{font-size:28px;margin:38px 0 10px;letter-spacing:-.045em;line-height:1.08}
+.level p{color:var(--muted);line-height:1.7;font-size:14px;max-width:560px;margin:0 0 24px}
+.speed{position:static;color:var(--soft);font-size:12px;margin-top:8px}
+.results-top{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:28px 0 20px;align-items:stretch}
+.results-top + .results-top{margin-top:20px}
+.result-card{padding:26px;border:1px solid var(--line);border-radius:19px;background:var(--panel);box-shadow:var(--shadow);margin:0}
+.result-card .value{font-size:47px;line-height:1;font-weight:950;letter-spacing:-.07em;color:var(--green)}.result-card h3{margin:12px 0 5px;font-size:17px}.result-card p{margin:0;color:var(--muted);line-height:1.55;font-size:13px}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:18px}table{width:100%;border-collapse:collapse;min-width:760px}th,td{padding:15px;border-bottom:1px solid var(--line);text-align:left}th{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}td{font-size:13px;color:var(--soft)}tr:last-child td{border-bottom:0}.good{color:var(--green);font-weight:900}
+.insight{margin-top:22px;padding:34px;border:1px solid color-mix(in srgb,var(--green) 25%,var(--line));border-radius:22px;background:linear-gradient(135deg,var(--green-soft),transparent)}
+.insight p{font-size:clamp(23px,3.2vw,39px);line-height:1.15;letter-spacing:-.045em;margin:9px 0 0;max-width:930px}.insight em{font-style:normal;color:var(--green)}
+.team{display:grid;grid-template-columns:repeat(5,1fr);gap:11px}.person{padding:20px;min-height:150px;border:1px solid var(--line);border-radius:17px;background:var(--panel);display:flex;flex-direction:column;justify-content:space-between;box-shadow:var(--shadow)}
+.person-num{font-size:10px;color:var(--green);letter-spacing:.15em;font-weight:900}.person strong{font-size:15px}.person span{display:block;color:var(--muted);font-size:11px;margin-top:5px}
+.person-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.person-links a{font-size:10px;color:var(--muted);border:1px solid var(--line);padding:6px 8px;border-radius:7px}
+.person-links a:hover{color:var(--green);border-color:color-mix(in srgb,var(--green) 45%,var(--line))}
+footer{padding:35px 0 55px;color:var(--muted);font-size:11px}.footer-row{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}.source-link{text-decoration:underline;text-underline-offset:3px}
+@media(max-width:800px){.nav-links{display:none}.container{width:min(var(--max),calc(100% - 28px))}.hero{padding-top:62px}.abstract,.rq-grid,.method-grid,.results-top{grid-template-columns:1fr}.curriculum{grid-template-columns:1fr}.team{grid-template-columns:1fr 1fr}.video-caption{display:block}.rq h3{font-size:34px}.level{min-height:330px}.level h3{margin-top:52px}}
+@media(max-width:520px){.team{grid-template-columns:1fr}h1{font-size:76px}.nav-cta{display:none}}
+
+/* Theme slider */
+.theme-toggle{
+  appearance:none;
+  border:0;
+  background:transparent;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:4px 2px;
+  cursor:pointer;
+  color:var(--muted);
+}
+.theme-sun,.theme-moon{
+  font-size:14px;
+  line-height:1;
+  user-select:none;
+}
+.theme-sun{color:var(--text)}
+.theme-moon{color:var(--muted)}
+.theme-switch{
+  width:48px;
+  height:26px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:var(--panel);
+  display:flex;
+  align-items:center;
+  padding:3px;
+  box-sizing:border-box;
+  transition:background .2s ease,border-color .2s ease;
+}
+.theme-knob{
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background:var(--text);
+  display:block;
+  transform:translateX(0);
+  transition:transform .22s ease,background .2s ease;
+  box-shadow:0 1px 4px rgba(0,0,0,.18);
+}
+.theme-toggle[aria-pressed="true"] .theme-knob{
+  transform:translateX(20px);
+}
+.theme-toggle[aria-pressed="true"] .theme-sun{color:var(--muted)}
+.theme-toggle[aria-pressed="true"] .theme-moon{color:var(--text)}
+.theme-toggle:focus-visible .theme-switch{
+  outline:2px solid var(--green);
+  outline-offset:3px;
+}
+
+.visualization-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.visualization-placeholder{min-height:230px;border:1px dashed var(--line);border-radius:18px;background:var(--panel);padding:26px;display:flex;flex-direction:column;justify-content:center}
+.visualization-placeholder h3{font-size:22px;margin:12px 0 8px}
+.visualization-placeholder p{color:var(--muted);font-size:13px;line-height:1.6;max-width:420px}
+.visualization-label{font-size:10px;letter-spacing:.16em;font-weight:900;color:var(--green)}
+@media(max-width:760px){.visualization-grid{grid-template-columns:1fr}}
+
+.viz-card{min-height:0;border:1px solid var(--line);border-radius:19px;background:var(--panel);padding:26px;box-shadow:var(--shadow)}
+.viz-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.viz-note{font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.viz-card h3{font-size:22px;margin:13px 0 22px;letter-spacing:-.025em}
+.metric-chart{display:grid;gap:15px}
+.metric-row{display:grid;grid-template-columns:1fr 1.7fr 72px;align-items:center;gap:10px}
+.metric-title{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--soft)}
+.metric-title b{font-size:12px;color:var(--text)}
+.bar-track,.eff-track{height:9px;background:var(--green-soft);border-radius:999px;overflow:hidden;border:1px solid var(--line)}
+.bar{height:100%;border-radius:999px}
+.bar.curriculum,.eff-fill.curriculum{background:var(--green)}
+.bar.direct,.eff-fill.direct{background:var(--muted)}
+.metric-row small{font-size:10px;color:var(--muted)}
+.viz-caption{margin:21px 0 0;color:var(--muted);font-size:12px;line-height:1.6}
+.efficiency-chart{display:grid;gap:18px}
+.eff-row{display:grid;grid-template-columns:150px 1fr;gap:16px;align-items:center}
+.eff-label{font-size:12px;color:var(--soft);display:flex;justify-content:space-between;gap:10px}
+.eff-label b{color:var(--text)}
+.eff-track{height:13px}
+.eff-fill{height:100%;border-radius:999px}
+@media(max-width:760px){
+  .metric-row{grid-template-columns:1fr 1.4fr 58px}
+  .eff-row{grid-template-columns:1fr}
+}
+
+.research-figure{border:1px solid var(--line);border-radius:19px;background:var(--panel);padding:26px;box-shadow:var(--shadow)}
+.figure-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:20px}
+.figure-head h3{font-size:24px;margin:10px 0 0;letter-spacing:-.03em}
+.figure-frame{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:#fff}
+.figure-frame img{display:block;width:100%;height:auto}
+.figure-caption{color:var(--muted);font-size:12px;line-height:1.65;margin:16px 0 0;max-width:900px}
+@media(max-width:760px){.figure-head{display:block}.figure-head .viz-note{display:block;margin-top:8px}}
+
+/* v18 final layout: one uniform page gutter */
+.container {
+  width: calc(100% - 80px);
+  max-width: 1400px;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  box-sizing: border-box;
+}
+@media (max-width: 900px) {
+  .container { width: calc(100% - 48px); }
+}
+@media (max-width: 600px) {
+  .container { width: calc(100% - 32px); }
+}
+
+/* Output: two equal video panels with the same outer alignment */
+.output-video-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.output-video-card {
+  min-width: 0;
+  box-sizing: border-box;
+}
+.output-video-card .video-frame,
+.output-video-card video {
+  width: 100%;
+  box-sizing: border-box;
+}
+.output-video-caption{
+  margin:0;
+  padding:13px 16px 15px;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.55;
+  text-align:left;
+  border-top:1px solid var(--line);
+}
+.output-video-card{
+  border:1px solid var(--line);
+  border-radius:16px;
+  overflow:hidden;
+  background:var(--panel);
+}
+.output-video-card .video-frame{background:#050807}
+.output-video-caption{background:var(--panel);}
+
+@media (max-width: 800px) {
+  .output-video-grid { grid-template-columns: 1fr; }
+}
+
+
+/* Key finding: use the full available line width */
+.insight p {
+  max-width: none !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+</style>
+</head>
+<body>
+<nav><div class="container nav-inner">
+<a class="logo" href="#"><span class="logo-accent">BULLET</span> TIME</a>
+<div class="nav-links"><a href="#abstract">Abstract</a><a href="#questions">Research Questions</a><a href="#method">Method</a><a href="#experiments">Experiments</a></div>
+<div class="nav-actions"><button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle light and dark mode" aria-pressed="false">
+    <span class="theme-sun" aria-hidden="true">☀</span>
+    <span class="theme-switch" aria-hidden="true"><span class="theme-knob"></span></span>
+    <span class="theme-moon" aria-hidden="true">☾</span>
+</button></div>
+</div></nav>
+
+<header class="hero container">
+<div class="kicker"><span class="dot"></span> Safe reinforcement learning </div>
+<h1><span class="title-accent">BULLET</span><br>TIME.</h1>
+<p class="paper-title">Safe Reinforcement Learning for Whole-Body Evasion on a Constrained Base</p>
+<p class="authors">Denis Crismariu · Jinyu Zhou · Harsh Salkar · Ratanjot Singh · Tugan Basaran<br>Eindhoven University of Technology · Eindhoven, The Netherlands</p>
+<p class="hero-description">A study of constrained reinforcement learning for whole-body hazard avoidance by a humanoid robot standing on a limited support surface.</p>
+<div class="hero-actions"><a class="btn btn-primary" href="#simulation">Watch simulation</a><a class="btn btn-secondary" href="#abstract">Read the project</a></div>
+</header>
+
+<section id="abstract"><div class="container abstract">
+<div><div class="section-label">01 · Abstract</div><h2 class="section-title">Abstract</h2></div>
+<div><p class="abstract-text">Humanoid robots operating in unstructured environments must remain balanced while reacting to fast-moving hazards. We study <strong>whole-body evasion on a constrained base</strong>: the robot stands on a small platform and must dodge flying hazards through whole-body motion while remaining upright. We formulate the task as a constrained Markov decision process and introduce a modified CRAX environment with explicit fall and bullet-contact costs. We train policies with constrained reinforcement learning on a three-level curriculum: one slow bullet, three medium-speed bullets, and six fast bullets. We then compare curriculum training with direct training and study how changing the hazard from small bullets to large planes changes the learned behaviour and safety.</p></div>
+</div></section>
+
+<section id="questions"><div class="container">
+<div class="section-label">02 · Research questions</div><h2 class="section-title">Research Questions</h2>
+<p class="section-copy">The study evaluates whether curriculum learning provides an advantage over direct training and whether the geometry and scale of the hazard influence the resulting policy and safety performance.</p>
+<div class="rq-grid" style="margin-top:28px">
+<article class="rq"><div class="rq-number">RQ1</div><h3>Does the curriculum improve over training directly on the final level?</h3><p>We compare a Curriculum agent trained through levels 1 → 2 → 3 with a Direct agent trained only on the final six-fast-bullet level, using the same constrained algorithm and total training budget.</p></article>
+<article class="rq"><div class="rq-number">RQ2</div><h3>How does the hazard type change what the agent learns and how safe it is?</h3><p>We compare small bullets with large planes. Bullets can often be avoided by moving one body part or leaning; planes cover more of the body and can require crouching or whole-body motion.</p></article>
+</div></div></section>
+
+<section id="simulation"><div class="container">
+<div class="section-label">03 · Output</div><h2 class="section-title">Simulation Output</h2>
+<p class="section-copy">The simulation illustrates the learned policy responding to incoming hazards while the humanoid remains on a constrained support surface. The task therefore requires hazard avoidance without compromising postural stability.</p>
+<div class="video-wrap" style="margin-top:28px">
+<div class="output-video-grid">
+  <div class="output-video-card">
+    <div class="video-frame">
+      <video controls playsinline preload="metadata"><source src="assets/bulet-time-simulation2.mp4" type="video/mp4">Your browser does not support the video element.</video>
+    </div>
+    <p class="output-video-caption">Bullet environment simulation output.</p>
+  </div>
+  <div class="output-video-card">
+    <div class="video-frame">
+      <video controls playsinline preload="metadata"><source src="assets/bulet-time-simulation.mp4" type="video/mp4">Your browser does not support the video element.</video>
+    </div>
+    <p class="output-video-caption">Plane environment simulation output.</p>
+  </div>
+</div></div>
+</div></section>
+
+<section id="method"><div class="container">
+<div class="section-label">04 · Method</div><h2 class="section-title">Methodology</h2>
+<p class="section-copy">The experimental environment extends the CRAX humanoid with modifications intended to support stable standing, explicit body contacts, and constrained whole-body evasion.</p>
+<div class="method-grid" style="margin-top:28px">
+<div class="method-card"><h3>Modified CRAX humanoid</h3><p>Flat 26 × 10 cm feet, two actuated ankle joints per foot, strengthened motors, colliding body parts and a stiffer contact solver. The robot has 21 actuators instead of 17.</p></div>
+<div class="method-card"><h3>Constrained RL</h3><p>PPO-Lag optimizes reward while constraining expected safety cost. Bullet-contact and fall costs are combined under a budget of 0.1 per episode in the bullet task.</p></div>
+<div class="method-card"><h3>Whole-body observations</h3><p>The policy receives 328 observation values, including torso state, joint angles and velocities, body inertial quantities, actuator forces, platform position and relative bullet information.</p></div>
+<div class="method-card"><h3>Two hazard families</h3><p>The bullet task uses small spherical projectiles. The plane task uses a large tilted square plane, requiring qualitatively different avoidance behaviour.</p></div>
+</div>
+</div>
+</div></section>
+
+<section id="curriculum"><div class="container">
+<div class="section-label">05 · Curriculum</div><h2 class="section-title">Curriculum Learning</h2>
+<p class="section-copy">The curriculum progressively increases hazard difficulty. At each stage, the learned policy, value networks, and observation normalizer are transferred to the next level.</p>
+<div class="curriculum" style="margin-top:28px">
+<article class="level"><div class="level-num">LEVEL 01</div><h3>Single bullet</h3><p>The agent first learns to maintain balance and remain on the constrained base while responding to a single, relatively slow projectile. This stage establishes the basic relationship between whole-body motion, hazard avoidance, and postural stability.</p><div class="speed">1 bullet · 0.75-1.5 m/s</div></article>
+<article class="level"><div class="level-num">LEVEL 02</div><h3>Several bullets</h3><p>The second stage introduces three medium-speed projectiles with tighter lateral and vertical spread. The policy must coordinate whole-body motion across multiple incoming hazards while continuing to avoid falls and unnecessary contacts.</p><div class="speed">3 bullets · 1.5-3.0 m/s</div></article>
+<article class="level"><div class="level-num">LEVEL 03</div><h3>Fast evasion</h3><p>The final bullet level presents six fast projectiles with the highest speeds and the tightest spread. The agent must react quickly, select effective evasive motions, and recover its posture while remaining within the limited support area.</p><div class="speed">6 bullets · 3.0-5.0 m/s</div></article>
+</div></div></section>
+
+<section id="experiments"><div class="container">
+<div class="section-label">06 · Experiments & results</div><h2 class="section-title">Experimental Results</h2>
+<p class="section-copy">The final policies are evaluated over 128 episodes. Safety is assessed primarily through fall rate, while the constrained cost captures undesirable hazard contacts and falls. The reported comparison is based on one training run per agent.</p>
+<div class="results-top">
+<div class="result-card"><div class="value">2.67</div><h3>Curriculum bullet cost</h3><p>About half the direct agent's bullet-contact cost of 5.51 at final level 3.</p></div>
+<div class="result-card"><div class="value">4.7%</div><h3>Curriculum fall rate</h3><p>Close to direct training at 3.9%, so the curriculum did not reduce falls.</p></div>
+</div>
+<table><thead><tr><th>Agent</th><th>Training</th><th>Steps</th><th>Total cost</th><th>Bullet cost</th><th>Falls</th><th>Return</th></tr></thead><tbody>
+<tr><td>Curriculum</td><td>Levels 1 → 2 → 3</td><td>34.1M</td><td>3.84 ± 5.18</td><td class="good">2.67</td><td>4.7%</td><td>10997 ± 1403</td></tr>
+<tr><td>Direct</td><td>Level 3 only</td><td>100.9M</td><td>6.49 ± 4.66</td><td>5.51</td><td>3.9%</td><td>11261 ± 943</td></tr>
+</tbody></table>
+<div class="results-top">
+<div class="result-card"><div class="value">52.0</div><h3>Plane cost · Curriculum</h3><p>The curriculum finished with substantially higher cost and 11.2% falls.</p></div>
+<div class="result-card"><div class="value">10.3</div><h3>Plane cost · Direct</h3><p>Direct training finished with 2.8% falls and learned to crouch and lean around the large hazard.</p></div>
+</div>
+
+<div class="research-figure">
+  <div class="figure-head">
+    <div>
+      <span class="visualization-label">TRAINING DYNAMICS</span>
+      <h3>Curriculum versus direct training</h3>
+    </div>
+    <span class="viz-note">Planes and bullets</span>
+  </div>
+  <div class="figure-frame">
+    <img src="assets/figure2-training-curves.png"
+         alt="Training curves comparing Curriculum and Direct agents for plane and bullet environments">
+  </div>
+  <p class="figure-caption">
+    Training cost and fall-rate curves for the Curriculum and Direct agents.
+    The top row shows the plane environment and the bottom row shows the bullet environment.
+    The right column compares cost using only the steps spent on the final level.
+  </p>
+</div>
+<div class="visualization-grid">
+<div class="viz-card">
+  <div class="viz-head"><span class="visualization-label">BULLET ENVIRONMENT</span><span class="viz-note">Final level 3</span></div>
+  <h3>Curriculum versus direct training</h3>
+  <div class="metric-chart">
+    <div class="metric-row"><div class="metric-title"><span>Bullet cost</span><b>2.67</b></div><div class="bar-track"><div class="bar curriculum" style="width:48.5%"></div></div><small>Curriculum</small></div>
+    <div class="metric-row"><div class="metric-title"><span>Bullet cost</span><b>5.51</b></div><div class="bar-track"><div class="bar direct" style="width:100%"></div></div><small>Direct</small></div>
+    <div class="metric-row"><div class="metric-title"><span>Fall rate</span><b>4.7%</b></div><div class="bar-track"><div class="bar curriculum" style="width:47%"></div></div><small>Curriculum</small></div>
+    <div class="metric-row"><div class="metric-title"><span>Fall rate</span><b>3.9%</b></div><div class="bar-track"><div class="bar direct" style="width:39%"></div></div><small>Direct</small></div>
+  </div>
+  <p class="viz-caption">The curriculum roughly halves bullet-contact cost, but the fall rate remains similar to direct training.</p>
+</div>
+<div class="viz-card">
+  <div class="viz-head"><span class="visualization-label">PLANE ENVIRONMENT</span><span class="viz-note">Final level 3</span></div>
+  <h3>Hazard cost and fall rate</h3>
+  <div class="metric-chart">
+    <div class="metric-row"><div class="metric-title"><span>Total cost</span><b>52.0</b></div><div class="bar-track"><div class="bar curriculum" style="width:100%"></div></div><small>Curriculum</small></div>
+    <div class="metric-row"><div class="metric-title"><span>Total cost</span><b>10.3</b></div><div class="bar-track"><div class="bar direct" style="width:19.8%"></div></div><small>Direct</small></div>
+    <div class="metric-row"><div class="metric-title"><span>Fall rate</span><b>11.2%</b></div><div class="bar-track"><div class="bar curriculum" style="width:100%"></div></div><small>Curriculum</small></div>
+    <div class="metric-row"><div class="metric-title"><span>Fall rate</span><b>2.8%</b></div><div class="bar-track"><div class="bar direct" style="width:25%"></div></div><small>Direct</small></div>
+  </div>
+  <p class="viz-caption">For large planes, direct training performs substantially better, with lower cost and fewer falls.</p>
+</div>
+</div>
+<div class="visualization-grid" style="margin-top:16px;grid-template-columns:1fr">
+<div class="viz-card">
+  <div class="viz-head"><span class="visualization-label">TRAINING EFFICIENCY</span><span class="viz-note">Environment steps</span></div>
+  <h3>Steps required to reach the final bullet level</h3>
+  <div class="efficiency-chart">
+    <div class="eff-row"><div class="eff-label">Curriculum <b>34.1M</b></div><div class="eff-track"><div class="eff-fill curriculum" style="width:33.8%"></div></div></div>
+    <div class="eff-row"><div class="eff-label">Direct <b>100.9M</b></div><div class="eff-track"><div class="eff-fill direct" style="width:100%"></div></div></div>
+  </div>
+  <p class="viz-caption">Curriculum training reached the final bullet level in about one third of the environment steps used by direct training.</p>
+</div>
+</div>
+<div class="insight"><div class="section-label">Key finding</div><p>Curriculum learning helped reduce <em>bullet contact</em>, but it did not improve falls. For the plane task, the intermediate curriculum level taught a strategy of standing tall and accepting the hazard - making the curriculum dramatically worse than direct training.</p></div>
+</div></section>
+
+<section><div class="container"><div class="section-label">07 · Project team</div><h2 class="section-title">Research<br>team.</h2><div class="team" style="margin-top:27px">
+<div class="person"><div class="person-num">01</div><div><strong>Denis Crismariu</strong><span>Research team</span></div><div class="person-links"><a href="https://www.linkedin.com/in/crismariu-denis-347778223/" target="_blank" rel="noopener noreferrer" aria-label="Denis LinkedIn">LinkedIn</a><a href="https://github.com/crismariudenis/" target="_blank" rel="noopener noreferrer" aria-label="Denis GitHub">GitHub</a><a href="mailto:d.crismariu@student.tue.nl">Email</a></div></div>
+<div class="person"><div class="person-num">02</div><div><strong>Jinyu Zhou</strong><span>Research team</span></div><div class="person-links"><a href="https://linkedin.com/in/jinyu-zhou-117862334" target="_blank" rel="noopener noreferrer" aria-label="Jinyu LinkedIn">LinkedIn</a><a href="https://github.com/goldFish9616" target="_blank" rel="noopener noreferrer" aria-label="Jinyu GitHub">GitHub</a><a href="mailto:j.zhou1@student.tue.nl">Email</a></div></div>
+<div class="person"><div class="person-num">03</div><div><strong>Harsh Salkar</strong><span>Research team</span></div><div class="person-links"><a href="https://www.linkedin.com/in/harshsalkar/" target="_blank" rel="noopener noreferrer" aria-label="Harsh LinkedIn">LinkedIn</a><a href="https://github.com/imHs15" target="_blank" rel="noopener noreferrer" aria-label="Harsh GitHub">GitHub</a><a href="mailto:h.p.salkar@student.tue.nl">Email</a></div></div>
+<div class="person"><div class="person-num">04</div><div><strong>Ratanjot Singh</strong><span>Research team</span></div><div class="person-links"><a href="https://www.linkedin.com/in/ratanjot-singh" target="_blank" rel="noopener noreferrer" aria-label="Ratanjot LinkedIn">LinkedIn</a><a href="https://github.com/sratanjot1" target="_blank" rel="noopener noreferrer" aria-label="Ratanjot GitHub">GitHub</a><a href="mailto:r.singh1@student.tue.nl">Email</a></div></div>
+<div class="person"><div class="person-num">05</div><div><strong>Tugan Basaran</strong><span>Research team</span></div><div class="person-links"><a href="https://www.linkedin.com/in/tugan-başaran-44404825b" target="_blank" rel="noopener noreferrer" aria-label="Tugan LinkedIn">LinkedIn</a><a href="https://github.com/TuganBasaran" target="_blank" rel="noopener noreferrer" aria-label="Tugan GitHub">GitHub</a><a href="mailto:t.basaran@student.tue.nl">Email</a></div></div>
+</div></div></section>
+
+<footer><div class="container footer-row"><span>© 2026 · BULLET TIME · Safe Reinforcement Learning for Whole-Body Evasion</span></div></footer>
+
+
+
+<script>
+(function () {
+  const toggle = document.getElementById('themeToggle');
+  if (!toggle) return;
+
+  const root = document.documentElement;
+  const saved = localStorage.getItem('bullet-time-theme');
+  const light = saved === 'light';
+
+  if (light) root.setAttribute('data-theme', 'light');
+  toggle.setAttribute('aria-pressed', String(light));
+
+  toggle.addEventListener('click', function () {
+    const isLight = root.getAttribute('data-theme') !== 'light';
+
+    if (isLight) {
+      root.setAttribute('data-theme', 'light');
+    } else {
+      root.removeAttribute('data-theme');
+    }
+
+    localStorage.setItem('bullet-time-theme', isLight ? 'light' : 'dark');
+    toggle.setAttribute('aria-pressed', String(isLight));
+  });
+})();
+</script>
+</body></html>
