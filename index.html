@@ -265,7 +265,16 @@ footer{padding:35px 0 55px;color:var(--muted);font-size:11px}.footer-row{display
 
 <section id="abstract"><div class="container abstract">
 <div><div class="section-label">01 · Abstract</div><h2 class="section-title">Abstract</h2></div>
-<div><p class="abstract-text">Humanoid robots operating in unstructured environments must remain balanced while reacting to fast-moving hazards. We study <strong>whole-body evasion on a constrained base</strong>: the robot stands on a small platform and must dodge flying hazards through whole-body motion while remaining upright. We formulate the task as a constrained Markov decision process and introduce a modified CRAX environment with explicit fall and bullet-contact costs. We train policies with constrained reinforcement learning on a three-level curriculum: one slow bullet, three medium-speed bullets, and six fast bullets. We then compare curriculum training with direct training and study how changing the hazard from small bullets to large planes changes the learned behaviour and safety.</p></div>
+<div><p class="abstract-text"><strong>Humanoid robots in unstructured environments must stay balanced while reacting to fast-moving hazards.</strong>
+  Prior learning-based work treats balance and evasion separately and assumes that the robot can step away from a threat.
+  We study <strong>whole-body evasion on a constrained base</strong>: a humanoid standing on a small platform must avoid flying hazards using only whole-body motion, without falling.
+  We formulate the problem as a <strong>constrained Markov decision process</strong> with separate costs for falling and for hazard contact.
+  We build two environments on the <strong>CRAX safe-RL benchmark</strong>, one with small, fast projectiles and one with large obstacles, and modify the CRAX humanoid so that standing in place is learnable.
+  With constrained reinforcement learning, our best policies stay on the platform in <strong>more than 95% of the episodes</strong> while learning to evade the hazards.
+  With projectiles, a <strong>three-level curriculum halves the hazard-contact cost</strong> compared with direct training, at the same fall rate.
+  With large obstacles, the agent learns a different strategy: it holds a <strong>crouch and ducks further as an obstacle passes</strong>.
+  Here <strong>direct training works best</strong>, and we identify why: an intermediate curriculum level with an <strong>unreachable cost budget teaches the agent to accept hits instead of evading them</strong>.
+  These findings show how the <strong>size of a hazard shapes the evasion behavior</strong> and give concrete guidelines for designing curricula in constrained reinforcement learning.</p></div>
 </div></section>
 
 <section id="questions"><div class="container">
